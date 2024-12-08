@@ -3,7 +3,7 @@ import logging
 
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
 
-def get_refinedchad_response(query, api_key):
+def get_finedchad_response(query, api_key):
     endpoint = "https://api-inference.huggingface.co/models/12sciencejnv/ChadGPT"
     headers = {"Authorization": f"Bearer {api_key}"}
     payload = {"inputs": query}
