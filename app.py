@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, jsonify
 import os
 from models.surfchad import get_surfchad_response  # Updated model name
 from models.finedchad import get_finedchad_response  # Updated model name
-from models.blenderchad import get_blenderchad_response  # New conversational model
+from models.talkchad import get_talkchad_response  # New conversational model
 
 app = Flask(__name__)
 
