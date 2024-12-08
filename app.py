@@ -1,21 +1,16 @@
 from flask import Flask, render_template, request, jsonify
 import os
-from models.webchad import get_webchad_response
-from models.refinedchad import get_refinedchad_response
-from models.blenderchad import get_blenderchad_response
-import logging
+from models.surfchad import get_surfchad_response  # Updated model name
+from models.finedchad import get_finedchad_response  # Updated model name
+from models.blenderchad import get_blenderchad_response  # New conversational model
 
-# Flask application setup
 app = Flask(__name__)
 
 # Environment variables for API keys
 HUGGINGFACE_API_KEY = os.getenv("HF_API_KEY")
 
 # Default model to use
-DEFAULT_MODEL = "SurfChad"
-
-# Configure logging for debugging
-logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
+DEFAULT_MODEL = "WebChad"
 
 @app.route("/")
 def home():
@@ -23,36 +18,28 @@ def home():
 
 @app.route("/chat", methods=["POST"])
 def chat():
-    user_message = request.json.get("message", "").strip()
+    user_message = request.json.get("message")
     selected_model = request.json.get("model", DEFAULT_MODEL)
 
-    # Validate input
-    if not user_message:
-        return jsonify({"error": "Message is empty or invalid."}), 400
+    if not user_message or len(user_message.strip()) == 0 or len(user_message) > 500:
+        return jsonify({"error": "Invalid input. Please provide a valid message."}), 400
 
-    logging.debug(f"Received message: {user_message}")
-    logging.debug(f"Selected model: {selected_model}")
-
-    # Route to the appropriate model
     try:
         if selected_model == "SurfChad":
-            reply, source_url = get_webchad_response(user_message, HUGGINGFACE_API_KEY)
+            reply, source_url = get_surfchad_response(user_message, HUGGINGFACE_API_KEY)
+            response = {"reply": reply, "source_url": source_url}
         elif selected_model == "FinedChad":
-            reply = get_refinedchad_response(user_message, HUGGINGFACE_API_KEY)
-            source_url = None
-        elif selected_model == "TalkChad":
+            reply = get_finedchad_response(user_message, HUGGINGFACE_API_KEY)
+            response = {"reply": reply}
+        elif selected_model == "BlenderChad":
             reply = get_blenderchad_response(user_message, HUGGINGFACE_API_KEY)
-            source_url = None
+            response = {"reply": reply}
         else:
-            return jsonify({"error": "Invalid model selected."}), 400
-
-        # Provide feedback for no response or error
-        if not reply:
-            reply = "No response generated. Please try again."
-        return jsonify({"reply": reply, "source_url": source_url})
+            response = {"error": "Invalid model selected."}
     except Exception as e:
-        logging.error(f"Error processing the request: {e}")
-        return jsonify({"error": "An unexpected error occurred."}), 500
+        response = {"error": f"An error occurred: {str(e)}"}
+
+    return jsonify(response)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
