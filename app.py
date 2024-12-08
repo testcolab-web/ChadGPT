@@ -6,11 +6,8 @@ from models.talkchad import get_talkchad_response
 
 app = Flask(__name__)
 
-# Environment variables for API keys
-HUGGINGFACE_API_KEY = os.getenv("HF_API_KEY")
-
 # Default model to use
-DEFAULT_MODEL = "TalkChad"
+DEFAULT_MODEL = "SurfChad"
 
 @app.route("/")
 def home():
@@ -24,15 +21,19 @@ def chat():
     if not user_message:
         return jsonify({"error": "No message provided"}), 400
 
+    api_key = os.getenv("HF_API_KEY")
+    if not api_key:
+        return jsonify({"error": "API key is missing. Please set HF_API_KEY."}), 500
+
     # Route to appropriate model
     if selected_model == "SurfChad":
-        reply, source_url = get_surfchad_response(user_message, HUGGINGFACE_API_KEY)
+        reply, source_url = get_surfchad_response(user_message, api_key)
         response = {"reply": reply, "source_url": source_url}
     elif selected_model == "FinedChad":
-        reply = get_finedchad_response(user_message, HUGGINGFACE_API_KEY)
+        reply = get_finedchad_response(user_message, api_key)
         response = {"reply": reply, "source_url": None}
     elif selected_model == "TalkChad":
-        reply = get_talkchad_response(user_message, HUGGINGFACE_API_KEY)
+        reply = get_talkchad_response(user_message, api_key)
         response = {"reply": reply, "source_url": None}
     else:
         response = {"error": "Invalid model selected."}
