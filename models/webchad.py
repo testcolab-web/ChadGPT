@@ -25,20 +25,14 @@ def search_and_scrape(query):
     return None, "No relevant link found on islamqa.info."
 
 def scrape_content(url):
-    headers = {"User-Agent": "Mozilla/5.0"}
     try:
         response = requests.get(url, headers=headers)
         response.raise_for_status()
+        soup = BeautifulSoup(response.text, "html.parser")
+        content = soup.find("div", class_="content")
+        return content.get_text(strip=True) if content else "Content not found."
     except requests.RequestException as e:
-        logging.error("Error fetching page content: %s", e)
-        return None, "Error: Unable to fetch page content."
-
-    soup = BeautifulSoup(response.text, "html.parser")
-    content = soup.find("div", class_="content")
-    if not content:
-        return None, "Content not found on the page."
-
-    return content.get_text(strip=True), None
+        return f"Error: Unable to fetch content. {e}"
 
 def summarize_content(content, api_key):
     endpoint = "https://api-inference.huggingface.co/models/facebook/bart-large-cnn"
