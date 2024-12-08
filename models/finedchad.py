@@ -11,9 +11,12 @@ def get_finedchad_response(query, api_key):
 
     try:
         response = requests.post(endpoint, headers=headers, json=payload)
-        response.raise_for_status()
-        result = response.json()
-        return result[0].get("generated_text", "No response generated.")
+        if response.status_code == 200:
+            result = response.json()
+            return result.get("generated_text", "No response generated.")
+        else:
+            logging.error(f"FinedChad API error: {response.status_code} - {response.text}")
+            return f"Error: FinedChad API returned {response.status_code}. {response.text}"
     except Exception as e:
-        logging.error(f"FinedChad error: {e}")
-        return f"Error: Unable to generate response. {e}"
+        logging.error(f"FinedChad mechanism failed: {e}")
+        return f"Error: Unable to generate response due to {e}"
