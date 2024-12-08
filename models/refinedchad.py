@@ -13,6 +13,6 @@ def get_refinedchad_response(query, api_key):
         response.raise_for_status()
         result = response.json()
         return result[0].get("generated_text", "No response generated.")
-    except Exception as e:
-        logging.error(f"Error generating response from RefinedChad: {e}")
-        return f"Error: Unable to generate response. {e}"
+    except requests.exceptions.RequestException as e:
+        logging.error("RefinedChad API error: %s", e)
+        return "Error: Unable to generate response."
