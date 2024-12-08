@@ -10,7 +10,7 @@ app = Flask(__name__)
 HUGGINGFACE_API_KEY = os.getenv("HF_API_KEY")
 
 # Default model to use
-DEFAULT_MODEL = "SurfChad"
+DEFAULT_MODEL = "TalkChad"
 
 @app.route("/")
 def home():
