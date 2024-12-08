@@ -13,7 +13,11 @@ def get_talkchad_response(query, api_key):
         response = requests.post(endpoint, headers=headers, json=payload)
         if response.status_code == 200:
             result = response.json()
-            return result.get("generated_text", "No response generated.")
+            if isinstance(result, list) and len(result) > 0:
+                return result[0].get("generated_text", "No response generated.")
+            else:
+                logging.error("Unexpected response format.")
+                return "Error: Unexpected response format."
         else:
             logging.error(f"TalkChad API error: {response.status_code} - {response.text}")
             return f"Error: TalkChad API returned {response.status_code}. {response.text}"
