@@ -1,29 +1,15 @@
 import requests
 from bs4 import BeautifulSoup
 import logging
-import random
-from functools import lru_cache
 
+# Configure logging
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
 
-# List of user agents to avoid getting blocked
-USER_AGENTS = [
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:54.0) Gecko/20100101 Firefox/54.0",
-    "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:45.0) Gecko/20100101 Firefox/45.0",
-    "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:47.0) Gecko/20100101 Firefox/47.0",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:66.0) Gecko/20100101 Firefox/66.0",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
-]
-
-@lru_cache(maxsize=50)
 def search_and_scrape(query):
     logging.debug("Starting search_and_scrape with query: %s", query)
     search_url = f"https://www.google.com/search?q=site:islamqa.info+{query}"
-    
-    # Choose a random User-Agent from the list to avoid getting blocked
     headers = {
-        "User-Agent": random.choice(USER_AGENTS)
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
     }
 
     try:
@@ -48,23 +34,19 @@ def search_and_scrape(query):
 
 def scrape_content(url):
     logging.debug("Starting scrape_content with URL: %s", url)
-    
-    # Choose a random User-Agent from the list to avoid getting blocked
     headers = {
-        "User-Agent": random.choice(USER_AGENTS)
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
     }
-    
     try:
         response = requests.get(url, headers=headers)
         response.raise_for_status()
         logging.debug("Content fetch successful: %s", response.url)
     except requests.RequestException as e:
         logging.error("Error fetching page content: %s", e)
-        return f"Error: Unable to fetch content. {e}"
+        return f"Error: Unable to fetch the page. Exception: {e}"
     
     soup = BeautifulSoup(response.text, "html.parser")
     content_div = soup.find("div", class_="content")
-    
     if not content_div:
         logging.warning("Content div not found on the page.")
         return "Error: Content not found in the page."
@@ -118,18 +100,29 @@ def generate_response(summary, query, api_key):
         return "Error: Unexpected response generation format."
 
 def get_surfchad_response(query, api_key):
-    url, error = search_and_scrape(query)
-    if error:
-        return error, None
+    logging.info("Starting main function.")  # Replace with your Hugging Face API key
 
-    content, error = scrape_content(url)
+    # Search and scrape content
+    error, link = search_and_scrape(query)
     if error:
-        return error, None
+        logging.error(error)
+        print(error)
+        return
+    
+    content = scrape_content(link)
+    if "Error" in content:
+        logging.error(content)
+        print(content)
+        return
+    
+    # Summarize content
+    summary = summarize_content(content, api_key)
+    if "Error" in summary:
+        logging.error(summary)
+        print(summary)
+        return
 
-    summary, error = summarize_content(content, api_key)
-    if error:
-        return error, None
-
-    # Return only the generated response as needed for the chatbot output
+    # Generate response
     response = generate_response(summary, query, api_key)
-    return response, None  # Only return the generated response, not the URL or intermediate content
+    logging.info("Generated response: %s", response)
+    return response, link
