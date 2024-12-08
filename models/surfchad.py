@@ -91,6 +91,32 @@ def summarize_content(content, api_key):
         logging.error("Unexpected summarization response format.")
         return "Error: Unexpected summarization response format."
 
+def generate_response(summary, query, api_key):
+    logging.debug("Starting generate_response. Summary length: %d", len(summary))
+    endpoint = "https://api-inference.huggingface.co/models/google/flan-t5-large"
+    headers = {"Authorization": f"Bearer {api_key}"}
+
+    input_text = f"""
+    Based on the context, provide a concise and direct answer to the question:
+    Context: {summary}
+    Question: {query}
+    Answer in one short sentence, without explanation.
+    """
+
+    try:
+        payload = {"inputs": input_text}
+        response = requests.post(endpoint, headers=headers, json=payload)
+        response.raise_for_status()
+        result = response.json()
+        logging.debug("Response generation successful.")
+        return result[0].get("generated_text", "Error: Generated text not found in response.")
+    except requests.RequestException as e:
+        logging.error("Error during response generation: %s", e)
+        return f"Error: Response generation failed. Exception: {e}"
+    except KeyError:
+        logging.error("Unexpected response generation response format.")
+        return "Error: Unexpected response generation format."
+
 def get_surfchad_response(query, api_key):
     url, error = search_and_scrape(query)
     if error:
@@ -104,4 +130,6 @@ def get_surfchad_response(query, api_key):
     if error:
         return error, None
 
-    return summary, url
+    # Return only the generated response as needed for the chatbot output
+    response = generate_response(summary, query, api_key)
+    return response, None  # Only return the generated response, not the URL or intermediate content
