@@ -5,7 +5,7 @@ logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %
 
 def get_finedchad_response(query, api_key):
     logging.debug("Processing query with FinedChad.")
-    endpoint = "https://api-inference.huggingface.co/models/12sciencejnv/ChadGPT"
+    endpoint = "https://api-inference.huggingface.co/models/12sciencejnv/FinedGPT"
     headers = {"Authorization": f"Bearer {api_key}"}
     payload = {"inputs": query}
 
