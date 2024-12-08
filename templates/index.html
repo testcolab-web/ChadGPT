@@ -12,26 +12,28 @@
         <header>
             <h1>ChadGPT</h1>
             <div>
-                <label for="model-select">Model:</label>
                 <select id="model-select">
-                    <option value="WebChad" selected>WebChad</option>
-                    <option value="RefinedChad">RefinedChad</option>
+                    <option value="SurfChad" selected>SurfChad</option>
+                    <option value="FinedChad">FinedChad</option>
+                    <option value="TalkChad">TalkChad</option>
                 </select>
                 <button id="theme-toggle">🌙</button>
             </div>
         </header>
         <div class="chat-container">
-            <div id="chat-log"></div>
+            <div id="chat-log">
+                <div class="welcome-message">
+                    <strong>What can I help you with?</strong>
+                </div>
+            </div>
             <div id="loading-ball"></div>
         </div>
+        <div class="input-container">
+            <input type="text" id="user-input" placeholder="Type your question...">
+            <button id="send-button">Send</button>
+        </div>
         <footer>
-            <div class="input-container">
-                <input type="text" id="user-input" placeholder="Ask a question...">
-                <button id="send-button">Send</button>
-            </div>
-        </footer>
-        <footer>
-            <p>Disclaimer: ChadGPT is for informational purposes and is based on Islamic methodology of Salaf. Always consult a qualified scholar for critical religious matters.</p>
+            <p id="disclaimer">This chatbot is for informational purposes. Please verify all critical information independently.</p>
         </footer>
     </div>
 </body>
