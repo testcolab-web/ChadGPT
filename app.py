@@ -7,7 +7,7 @@ from models.talkchad import get_talkchad_response
 app = Flask(__name__)
 
 # Default model to use
-DEFAULT_MODEL = "SurfChad"
+DEFAULT_MODEL = "TalkChad"
 
 @app.route("/")
 def home():
