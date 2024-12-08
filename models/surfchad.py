@@ -4,8 +4,8 @@ import logging
 
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
 
-def search_and_scrape(query):
-    logging.debug("Starting search_and_scrape with query: %s", query)
+def get_surfchad_response(query, api_key):
+    # Step 1: Perform search
     search_url = f"https://www.google.com/search?q=site:islamqa.info+{query}"
     headers = {"User-Agent": "Mozilla/5.0"}
 
@@ -13,52 +13,51 @@ def search_and_scrape(query):
         response = requests.get(search_url, headers=headers)
         response.raise_for_status()
     except requests.RequestException as e:
-        logging.error("Error during Google search: %s", e)
-        return None, "Error: Unable to perform search."
+        logging.error(f"Error during search: {e}")
+        return f"Error: Unable to perform search. {e}", None
 
     soup = BeautifulSoup(response.text, "html.parser")
+    link = None
+
+    # Extract the first relevant link
     for result in soup.find_all("div", class_="g"):
-        link = result.find("a", href=True)
-        if link and "islamqa.info" in link["href"]:
-            return link["href"], None
+        link_tag = result.find("a", href=True)
+        if link_tag and "islamqa.info" in link_tag["href"]:
+            link = link_tag["href"]
+            break
 
-    return None, "No relevant link found on islamqa.info."
+    if not link:
+        return "No relevant link found on islamqa.info.", None
 
-def scrape_content(url):
+    # Step 2: Scrape content
     try:
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
-        soup = BeautifulSoup(response.text, "html.parser")
-        content = soup.find("div", class_="content")
-        return content.get_text(strip=True) if content else "Content not found."
+        content_response = requests.get(link, headers=headers)
+        content_response.raise_for_status()
     except requests.RequestException as e:
-        return f"Error: Unable to fetch content. {e}"
+        logging.error(f"Error fetching content from {link}: {e}")
+        return f"Error: Unable to fetch content. {e}", None
 
-def summarize_content(content, api_key):
-    endpoint = "https://api-inference.huggingface.co/models/facebook/bart-large-cnn"
-    headers = {"Authorization": f"Bearer {api_key}"}
-    payload = {"inputs": content[:4096]}  # Limit content to max token size
+    content_soup = BeautifulSoup(content_response.text, "html.parser")
+    content_div = content_soup.find("div", class_="content")
+
+    if not content_div:
+        return "Content not found on the page.", None
+
+    content = content_div.get_text(strip=True)
+
+    # Step 3: Summarize content
+    summarization_endpoint = "https://api-inference.huggingface.co/models/facebook/bart-large-cnn"
+    summarization_headers = {"Authorization": f"Bearer {api_key}"}
+    summarization_payload = {"inputs": content[:4096]}  # Truncate if too long
 
     try:
-        response = requests.post(endpoint, headers=headers, json=payload)
-        response.raise_for_status()
-        result = response.json()
-        return result[0]["summary_text"], None
+        summarization_response = requests.post(
+            summarization_endpoint, headers=summarization_headers, json=summarization_payload
+        )
+        summarization_response.raise_for_status()
+        summary = summarization_response.json()[0]["summary_text"]
     except Exception as e:
-        logging.error("Summarization failed: %s", e)
-        return None, "Error: Unable to summarize content."
+        logging.error(f"Summarization error: {e}")
+        return f"Error: Unable to summarize content. {e}", None
 
-def get_webchad_response(query, api_key):
-    url, error = search_and_scrape(query)
-    if error:
-        return error, None
-
-    content, error = scrape_content(url)
-    if error:
-        return error, None
-
-    summary, error = summarize_content(content, api_key)
-    if error:
-        return error, None
-
-    return summary, url
+    return summary, link
